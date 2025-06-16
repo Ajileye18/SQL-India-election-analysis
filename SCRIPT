@@ -1,0 +1,97 @@
+-- Start by creating the database
+CREATE DATABASE electionanalysis;
+-- Select database to use
+USE electionanalysis;
+
+-- Creating the table from the .csv file
+DROP TABLE statewise_results;
+CREATE TABLE statewise_results (
+constituency VARCHAR(100),
+constituency_number INT,
+parliament_constituency VARCHAR(100),
+leading_candidate VARCHAR(100),
+trailing_Candidate VARCHAR(100),
+margin INT,
+status VARCHAR(100),
+state_id VARCHAR(10),
+state VARCHAR(100),
+FOREIGN KEY (state_id) REFERENCES states (state_id)
+);
+TRUNCATE TABLE states;
+DROP TABLE states;
+CREATE TABLE states (
+state_id VARCHAR(10) PRIMARY KEY,
+State VARCHAR(100)
+);
+
+DROP TABLE party_wise_result;
+CREATE TABLE party_wise_result (
+party VARCHAR(100),
+won INT,
+party_id INT PRIMARY KEY
+);
+
+DROP TABLE constituency_wise_result;
+CREATE TABLE constituency_wise_result (
+S_No INT,
+parliament_constituency VARCHAR(100),
+constituency_name VARCHAR(100),
+winning_candidate VARCHAR(100),
+total_votes VARCHAR(100),
+margin VARCHAR(100),
+constituency_id VARCHAR(100),
+party_id INT
+);
+
+DROP TABLE constituency_wise_details;
+CREATE TABLE constituency_wise_details (
+s_no INT,
+candidate VARCHAR(100),
+Party VARCHAR(100),
+evm_votes INT,
+postal_votes INT,
+total_votes INT,
+percent_of_votes DECIMAL(5,2),
+constituency_id VARCHAR(100) 
+);
+/* Now that we have created the tables, we start to load data into it from the .csv file */
+
+LOAD DATA INFILE "C:\\ProgramData\\MySQL\\MySQL Server 8.0\\Uploads\\india election\\states.csv"
+INTO TABLE states
+FIELDS TERMINATED BY ','
+ENCLOSED BY '"'
+LINES TERMINATED BY '\r\n' -- open the .csv file with Notepad++ and check for the window() value at the bottom right corener
+(state_id, state);							-- this determine the LINES TERMINATED BY value
+
+LOAD DATA INFILE "C:\\ProgramData\\MySQL\\MySQL Server 8.0\\Uploads\\india election\\statewise_results.csv"
+INTO TABLE statewise_results
+FIELDS TERMINATED BY ','
+ENCLOSED BY '"'
+LINES TERMINATED BY '\r\n'
+IGNORE 1 LINES
+(constituency, constituency_number, parliament_constituency,
+ leading_candidate, trailing_Candidate, margin, status, state_id, state);
+ 
+ LOAD DATA INFILE "C:\\ProgramData\\MySQL\\MySQL Server 8.0\\Uploads\\india election\\partywise_results.csv"
+ INTO TABLE party_wise_result
+ FIELDS TERMINATED BY ','
+ENCLOSED BY '"'
+LINES TERMINATED BY '\r\n'
+IGNORE 1 LINES
+(party, won, party_id);
+
+LOAD DATA INFILE "C:\\ProgramData\\MySQL\\MySQL Server 8.0\\Uploads\\india election\\constituencywise_results.csv"
+INTO TABLE constituency_wise_result
+FIELDS TERMINATED BY ','
+ENCLOSED BY '"'
+LINES TERMINATED BY '\r\n'
+IGNORE 1 LINES
+(S_No, parliament_constituency, constituency_name, winning_candidate, total_votes, margin, constituency_id, party_id);
+
+LOAD DATA INFILE "C:\\ProgramData\\MySQL\\MySQL Server 8.0\\Uploads\\india election\\constituencywise_details.csv"
+INTO TABLE constituency_wise_details
+FIELDS TERMINATED BY ','
+ENCLOSED BY '"'
+LINES TERMINATED BY '\r\n'
+IGNORE 1 LINES
+(s_no, candidate, Party, evm_votes, postal_votes, total_votes, percent_of_votes, constituency_id);
