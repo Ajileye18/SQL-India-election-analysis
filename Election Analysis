@@ -1,0 +1,82 @@
+-- data manipulation and analysis
+-- 1. Total Seat
+SELECT count(DISTINCT parliament_constituency) AS total_seat
+FROM statewise_results;
+-- 2. What are the total number of seats available for election in each state
+SELECT  state, COUNT(constituency_number) total_available_seats
+FROM statewise_results
+GROUP BY  state with rollup; -- with roll up give the total seat available, and this must tally with the total_seat in 1 above
+-- 3. Total seats won by NDA Alliance
+SELECT 
+count(CASE
+	WHEN party IN (
+                'Bharatiya Janata Party - BJP', 
+                'Telugu Desam - TDP', 
+				'Janata Dal  (United) - JD(U)',
+                'Shiv Sena - SHS', 
+                'AJSU Party - AJSUP', 
+                'Apna Dal (Soneylal) - ADAL', 
+                'Asom Gana Parishad - AGP',
+                'Hindustani Awam Morcha (Secular) - HAMS',  'Janasena Party - JnP', 
+				'Janata Dal  (Secular) - JD(S)',
+                'Lok Janshakti Party(Ram Vilas) - LJPRV', 
+                'Nationalist Congress Party - NCP',
+                'Rashtriya Lok Dal - RLD', 
+                'Sikkim Krantikari Morcha - SKM')
+	THEN 'won'		ELSE 0	END) NDA_total_seats_won
+FROM party_wise_result;
+
+-- 4. Winning candidate's name, their party name, total votes, and the margin of victory for a specific state and constituency
+SELECT 
+ b.winning_candidate,
+ c.party,
+ b.total_votes,
+  a.margin,
+   d.state,
+b.constituency_name
+FROM statewise_results a
+LEFT JOIN constituency_wise_result b ON a.parliament_constituency = b.parliament_constituency
+LEFT JOIN party_wise_result c ON b.party_id = c.party_id
+LEFT JOIN states d ON a.state_id = d.state_id -- use appropriate table for each selected category
+WHERE d.State = 'Uttar Pradesh' AND b.constituency_name = 'AMETHI';
+
+-- 5. What is the distribution of EVM votes versus postal votes for candidates in a specific constituency?
+SELECT a.candidate,
+		a.evm_votes,
+        a.postal_votes,
+        b.constituency_name
+FROM constituency_wise_details a
+LEFT JOIN constituency_wise_result b ON a.constituency_id = b.constituency_id;
+
+-- 6. Which parties won the most seats in s State, and how many seats did each party win?
+ SELECT b.party, count(a.constituency_id) AS seat_won, e. state_id, e.state
+FROM constituency_wise_result a
+LEFT JOIN constituency_wise_details b ON a.constituency_id = b.constituency_id
+LEFT JOIN party_wise_result c ON  a.party_id = c.party_id
+LEFT JOIN statewise_results d ON a.parliament_constituency = d.parliament_constituency
+LEFT JOIN states e ON d.state_id = e.state_id
+WHERE e.state_id LIKE 's%'
+GROUP BY b.party, e. state_id, e.state;
+
+-- 7. Which candidate received the highest number of EVM votes in each constituency (Top 10)?
+SELECT candidate, evm_votes
+FROM constituency_wise_details
+ORDER BY evm_votes DESC
+LIMIT 1; -- ADD limit to get the top 1 candidate with the highest evm_vote. It is important to ORDER BY DESC
+
+/* 8. For the state of Maharashtra, what are the total number of seats, total number of candidates,
+total number of parties, total votes (including EVM and postal), and the breakdown of EVM and postal votes? */
+
+
+SELECT count( DISTINCT b.constituency_id) total_seat, 
+count(DISTINCT c.candidate) total_candidate,
+COUNT(DISTINCT e.party) total_party,
+SUM(c.evm_votes)+SUM(c.postal_votes) total_vote, 
+SUM(c.evm_votes) total_evm_votes,
+SUM(c. postal_votes) total_postal_votes
+FROM statewise_results a 
+LEFT JOIN constituency_wise_result b ON a.parliament_constituency = b.parliament_constituency
+LEFT JOIN constituency_wise_details c ON b.constituency_id = c.constituency_id
+LEFT JOIN states d ON a.state_id = d.state_id
+LEFT JOIN party_wise_result e ON b.party_id = e.party_id
+WHERE d.state = 'Maharashtra' -- Dont forget to include DISTINCT with the COUNT() function
